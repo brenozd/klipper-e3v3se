@@ -485,7 +485,7 @@ class PrinterData:
 
     def probe_calibrate(self):
         self.sendGCode('G28') # home the printer
-        self.sendGCode('PRTOUCH_PROBE_OFFSET CLEAR_NOZZLE=0 APPLY_Z_ADJUST=1') # use the prtouch to find the z offset and apply it
+        self.sendGCode('PRTOUCH_PROBE_ZOFFSET CLEAR_NOZZLE=0 APPLY_Z_ADJUST=1') # use the prtouch to find the z offset and apply it
 
     def resume_job(self):
         self.sendGCode('RESUME') # resume the print
