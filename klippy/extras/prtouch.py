@@ -427,19 +427,22 @@ class PRTouchZOffsetWrapper:
 
         # Same arithmetic as ProbeCommandHelper.probe_calibrate_finalize() in
         # probe.py: z_offset = offsets[2] - mpresult.bed_z + ppos.bed_z, i.e.
-        # the trigger height above the point where the nozzle contacts the bed
-        # (bed_z is already relative to start_z_offset, so it is added back
-        # once and only once - configfile.set() persists this value as is).
-        z_offset = start_z_offset - nozzle_z_offset + z_probe.bed_z
+        # the trigger height above the point where the nozzle contacts the bed.
+        # nozzle_z_offset is read in the gcode frame (dirzctl steps Z without
+        # touching the toolhead position), so subtract the gcode offset that is
+        # active during the measurement to get the physical contact height.
+        z_offset = start_z_offset - nozzle_z_offset + z_probe.bed_z - homing_origin[2]
         self.pnt_msg('Calculated z_offset: %.3f' % z_offset)
 
-        # A positive Z_ADJUST raises the nozzle for the same gcode Z, so the
-        # adjustment is what has to be added to reach the new offset; any gcode
-        # offset already in effect is replaced rather than stacked on.
+        # SET_GCODE_OFFSET Z_ADJUST adds to the offset already in effect, so
+        # cancel that offset here too: the resulting offset is
+        # start_z_offset - z_offset, independent of the measurement's offset.
         z_adjust = start_z_offset - z_offset - homing_origin[2]
         self.pnt_msg('z_adjust: %.3f' % z_adjust)
         if gcmd.get_int('APPLY_Z_ADJUST', 0) == 1:
-            self.obj.gcode.run_script_from_command('SET_GCODE_OFFSET Z_ADJUST=%f MOVE=1' % (z_adjust))
+            # MOVE=0: the commanded Z is stale after the dirzctl probe, so moving
+            # here could drive the nozzle into the bed on a downward adjustment.
+            self.obj.gcode.run_script_from_command('SET_GCODE_OFFSET Z_ADJUST=%f MOVE=0' % (z_adjust))
 
         # probe_calibrate_finalize() reports -kin_pos[2] as the z_offset.
         self.probe_calibrate_finalize([z_probe.bed_x, z_probe.bed_y, -z_offset])
