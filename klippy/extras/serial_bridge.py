@@ -128,6 +128,9 @@ class PrinterSerialBridge:
     def send_text(self, msg):
         self.send_serial(msg.encode('utf-8'))
 
+    def write(self, msg):
+        self.serial_bridge_send_cmd.send([self.oid, msg, 4])
+
     def send_serial(self, msg):
         if not self._ready:
             self.warn("Can't send message in a disconnected state")
