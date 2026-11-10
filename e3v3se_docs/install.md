@@ -86,7 +86,7 @@ With that tool you define what exactly should be compiled. So please do the foll
 
 > Micro-controller Architecture: `STMicroelectronics STM32`
 > Processor model: `STM32F103`
-> Bootloader offset: `8KiB bootloader`
+> Bootloader offset: `28KiB bootloader`
 > Communication interface: `Serial (on USART1 PA10/PA9)`
 > Activate the point "`Enable extra low-level configuration options`"
 > In the now expanded menu you have to activate "`Enable serial bridge`" and "`USART2`"
