@@ -144,8 +144,9 @@ class PRTouchZOffsetWrapper:
     def _check_trigger(self, arg_index, fit_vals, unfit_vals, min_hold, max_hold):
         all_params, tick = self.obj.dirzctl.get_params()
         if len(all_params) == 2:
-            self._pnt_tri_msg(arg_index, 'Tri by Dirzctl run over!', fit_vals)
-            return True
+            # stroke ended with no contact: never report it as a trigger (result would be garbage)
+            self.obj.hx711s.query_start(self.cfg.pi_count * 2, int(0), del_dirty=False, show_msg=False)
+            raise self.obj.printer.command_error("probe_by_step: no contact within stroke (sensor off the pad or base shifted)")
         fit_vals_t = [x for x in fit_vals]
         self.val.out_index = self.cfg.pi_count - 1
         if len(fit_vals) >= (self.cfg.pi_count / 2) and math.fabs(fit_vals[-1]) >= max_hold and \
@@ -334,6 +335,7 @@ class PRTouchZOffsetWrapper:
         return (up_min_cnt if up_min_cnt >= 0 else 0), up_all_cnt, True
 
     def probe_by_step(self, rdy_pos, speed_mm, min_dis_mm, min_hold, max_hold, up_after=True):
+        min_dis_mm = min(min_dis_mm, rdy_pos[2] + 1.)  # stop 1 mm below nominal contact (z=0), not 10 mm
         self.obj.hx711s.read_base(int(self.cfg.base_count / 2), max_hold)
         step_cnt = int(min_dis_mm / (self.obj.dirzctl.steppers[0].get_step_dist() * self.obj.dirzctl.step_base))
         step_us = int(((min_dis_mm / speed_mm) * 1000 * 1000) / step_cnt)

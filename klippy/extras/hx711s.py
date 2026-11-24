@@ -152,6 +152,7 @@ class HX711S:
         avgs = [0, 0, 0, 0]
         rvs = [[], [], [], []]
         for i in range(3):
+            self.delay_s(0.2)  # let load-cell creep settle after the move / previous press
             self.base_avgs = [0, 0, 0, 0]
             avgs = [0, 0, 0, 0]
             self.query_start(cnt, cnt + 5, del_dirty=True, show_msg=False)
@@ -187,8 +188,10 @@ class HX711S:
             sum_max = 0
             for j in range(self.s_count):
                 sum_max += math.fabs(rvs[j][2] - rvs[j][0])
-            if sum_max < max_hold * 2:
+            if sum_max < max_hold / 100:
                 break
+        else:
+            raise self.printer.command_error("read_base: load cell unstable, spread %.0f >= %.0f after 3 tries" % (sum_max, max_hold / 100))
         return avgs, rvs
 
     cmd_READ_HX711_help = "Read hx711s vals"
